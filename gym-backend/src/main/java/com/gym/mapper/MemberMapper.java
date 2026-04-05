@@ -4,11 +4,10 @@ import com.gym.entity.Common;
 import com.gym.entity.Member;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 会员 仓库类
@@ -19,6 +18,9 @@ import java.util.List;
 @Mapper
 @Repository
 public interface MemberMapper {
+
+     // 新增：获取图表统计数据
+     List<Map<String, Object>> getMemberStats();
 
      List<Member> getAllMember(int page,int size);
 
@@ -62,7 +64,5 @@ public interface MemberMapper {
      int getMemberPower(int memberNo);
 
      int updateMemberChangeByMemberNo(int memberNo,double coursePrice);
-
-
 
 }

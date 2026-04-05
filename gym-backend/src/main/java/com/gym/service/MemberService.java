@@ -8,7 +8,10 @@ import com.gym.utils.JwtUtil;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,39 @@ public class MemberService {
 
     @Resource
     private RegisterMapper registerMapper;
+
+    // 新增：获取图表统计数据的方法
+    public Map<String, Object> getMemberStats() {
+        List<Map<String, Object>> stats = memberMapper.getMemberStats();
+
+        List<String> days = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate today = LocalDate.now();
+
+        // 构造近7天的日期数组
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            String dateString = date.format(formatter);
+            days.add(dateString);
+
+            int count = 0;
+            if (stats != null) {
+                for (Map<String, Object> stat : stats) {
+                    if (stat.get("clickDate") != null && dateString.equals(stat.get("clickDate").toString())) {
+                        count = Integer.parseInt(stat.get("count").toString());
+                        break;
+                    }
+                }
+            }
+            counts.add(count);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("days", days);
+        result.put("counts", counts);
+        return result;
+    }
 
     public List<Member> getMemberMapper(int page, int size) {
         return memberMapper.getAllMember(page, size);
@@ -53,26 +89,16 @@ public class MemberService {
     }
 
     public Map<String, Object> addMember(Member member) {
-
         Map<String, Object> resultMap = new HashMap<>();
 
-
-        /*随机生成用户名*/
         int Username = java.util.UUID.randomUUID().toString().hashCode();
         if (Username < 0) {
             Username = -Username;
         }
-        // 0 代表前面补充0
-        // 10 代表长度为10
-        // d 代表参数为正数型
         String format = String.format("%010d", Username).substring(0, 10);
         member.setMemberUsername(format);
-
-        /*默认密码*/
         member.setMemberPassword("123456");
         member.setCardTime(LocalDateTime.now());
-
-        /*新增用户时将购买时间=剩余时间*/
         member.setCardNextClass(member.getCardClass());
 
         int result = memberMapper.addMember(member);
@@ -103,10 +129,7 @@ public class MemberService {
     }
 
     public Map<String, Object> updateMember(Member member) {
-
         Map<String, Object> resultMap = new HashMap<>();
-
-
         int result = memberMapper.updateMember(member);
 
         if (result > 0) {
@@ -120,10 +143,7 @@ public class MemberService {
     }
 
     public Map<String, Object> updateMemberByMemberNo(Member member) {
-
         Map<String, Object> resultMap = new HashMap<>();
-
-
         int result = memberMapper.updateMemberByMemberNo(member);
 
         if (result > 0) {
@@ -148,14 +168,12 @@ public class MemberService {
         return memberMapper.totalMemberFuzzy(keyWord);
     }
 
-
     public Map<String, Object> getMemberPassword(String memberPhone, String memberPassword) {
         Map<String, Object> resultMap = new HashMap<>();
         Member result = memberMapper.getMemberPassword(memberPhone, memberPassword);
 
         if (result != null) {
             result.setToken(JwtUtil.createTokenToMember());
-
             resultMap.put("token", result.getToken());
             resultMap.put("memberUsername", result.getMemberUsername());
             resultMap.put("memberNo", result.getMemberNo());
@@ -177,7 +195,6 @@ public class MemberService {
         return memberMapper.getMemberIntegral(memberNo);
     }
 
-
     public double getMemberPower(int memberNo) {
         return memberMapper.getMemberPower(memberNo);
     }
@@ -194,9 +211,7 @@ public class MemberService {
         return totalMoney;
     }
 
-
     public int updateMemberChange(int memberNo) {
-        //获取购物总额
         Double totalBuy = registerMapper.getTotalBuyByMemberNo(memberNo);
         if (totalBuy == null) {
             totalBuy = Double.valueOf(0);
@@ -214,7 +229,6 @@ public class MemberService {
 
     public Map<String, Object> updateMemberPassword(String memberPhone, String memberPassword) {
         Map<String, Object> resultMap = new HashMap<>();
-
         int result = memberMapper.updateMemberPassword(memberPhone, memberPassword);
 
         if (result > 0) {
@@ -239,5 +253,4 @@ public class MemberService {
         }
         return resultMap;
     }
-
 }

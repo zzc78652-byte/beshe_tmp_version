@@ -29,6 +29,12 @@ public class MemberController {
     @Resource
     private MemberService memberService;
 
+    // 新增：获取近7天会员注册统计图表数据
+    @RequestMapping(path = "/getMemberStats")
+    public Map<String, Object> getMemberStats() {
+        return memberService.getMemberStats();
+    }
+
     @RequestMapping(path = "/getAllMember")
     public List<Member> getAllMember(int page, int size) {
         return memberService.getMemberMapper(page, size);
@@ -101,7 +107,6 @@ public class MemberController {
         return memberService.getMemberPower(memberNo);
     }
 
-
     @RequestMapping(path = "/updateMemberChange")
     public double updateMemberChange(Integer memberNo) {
         return memberService.updateMemberChange(memberNo);
@@ -127,19 +132,12 @@ public class MemberController {
         return memberService.updateMemberPower(memberPower, memberNo);
     }
 
-    /**
-     * 导出接口
-     */
     @GetMapping("/memberExport")
     public void export(HttpServletResponse response) throws Exception {
-        // 从数据库查询出所有的数据
         List<Member> list = memberService.getAllMemberNoPage();
-        // 在内存操作，写出到浏览器
         ExcelWriter writer = ExcelUtil.getWriter(true);
-        // 一次性写出list内的对象到excel，使用默认样式，强制输出标题
         writer.write(list, true);
 
-        // 设置浏览器响应的格式
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
         String fileName = URLEncoder.encode("会员信息", "UTF-8");
         response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
@@ -149,9 +147,6 @@ public class MemberController {
         writer.close();
     }
 
-    /**
-     * excel 导入
-     */
     @RequestMapping("/memberImport")
     @CrossOrigin
     public Map<String, Object> imp(MultipartFile file) throws Exception {
@@ -159,9 +154,6 @@ public class MemberController {
         ExcelReader reader = ExcelUtil.getReader(inputStream);
         List<Member> list = reader.readAll(Member.class);
 
-        //上传的excel数据,保存到数据库中
-        Map<String, Object> stringObjectMap = memberService.saveMemberBatch(list);
-        return stringObjectMap;
+        return memberService.saveMemberBatch(list);
     }
-
 }
